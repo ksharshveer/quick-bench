@@ -1,0 +1,61 @@
+#!/bin/bash
+
+# Syntax
+# command [directory]
+
+# Usage Examples
+# dd-bench-write
+# dd-bench-write ~/
+# dd-bench-write /mnt/mydir
+
+# Theoretical bandwidth of some usb types
+# Usb 2.0       480 Mb/s or 60   MB/s
+# Usb 3.0       4.8 Gb/s or 600  MB/s
+# Usb 3.1 Gen2  10  Gb/s or 1.25 GB/s
+# Usb 3.2       20  Gb/s or 2.5  GB/s
+# Usb 4         40  Gb/s or 5    GB/s
+
+# Settings
+warmup_interval=5
+timeout_interval=5
+dd_count=1M
+dd_bs=1M
+
+# Location to use for write speed testing
+if [ -d "$1" ]; then
+        test_folder="$1"
+elif [ -d "~/tmp" ]; then
+        test_folder="~/tmp"
+else
+        test_folder="/tmp"
+fi
+
+# File written as part of the test
+test_file="${test_folder}/speed_test_file$$"
+
+echo "Benchmarking in '${test_folder}'"
+
+# Cleaning up temporary files in case the process is interrupted
+clean_up() {
+        if [ -e "${test_file}" ]; then
+                rm "${test_file}"
+        fi
+}
+
+trap clean_up SIGINT SIGHUP SIGTERM
+
+# Executing write benchmark
+if [ -d "${test_folder}" ]; then
+
+	echo
+	echo "Running dd with byte sector value ${dd_bs}B"
+	timeout --signal=SIGHUP ${timeout_interval} dd if=/dev/zero of="${test_file}" bs=${dd_bs} count=${dd_count} oflag=dsync status=progress
+	echo
+
+fi
+
+clean_up
+
+echo
+echo "Finished!"
+

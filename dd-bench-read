@@ -1,0 +1,36 @@
+#!/bin/bash
+
+# Might show unexpectedly high speeds if caching is involved,
+# therefore the script may not be able to help accurately
+
+# Syntax 1
+# sudo command device
+
+# Example
+# sudo dd-bench-read /dev/mydevice
+
+# Syntax 2
+# command file/to/read
+
+# Example
+# dd-bench-read /home/mybigtestfile
+
+if [ -z $1 ] || [ -d $1 ]; then
+	echo "Please provide path of device to be tested!"
+	exit 1
+fi
+
+echo "Benchmarking '$1'"
+
+timeout_interval=5
+dd_bs=1M
+dd_count=1M
+
+echo
+echo "Running dd with byte sector value ${dd_bs}B"
+timeout --signal=SIGHUP ${timeout_interval} dd if=$1 of=/dev/null bs=${dd_bs} count=${dd_count} iflag=nocache status=progress
+echo
+
+echo
+echo "Finished!"
+
